@@ -6,6 +6,7 @@ coverage
 craftbukkit*.jar
 InstalledFiles
 lib/bundler/man
+local-server/
 pkg
 rdoc
 spec/reports
