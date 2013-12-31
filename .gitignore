@@ -8,6 +8,7 @@ InstalledFiles
 lib/bundler/man
 local-server/
 pkg
+Purugin
 rdoc
 spec/reports
 test/tmp
