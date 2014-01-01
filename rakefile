@@ -1,0 +1,67 @@
+PURUGIN_REPO = 'https://github.com/enebo/Purugin.git'
+PURUGIN_DIR = 'Purugin'
+
+#TODO: coordinate version with Purugin pom.xml
+CRAFTBUKKIT_RECOMMENDED = 'http://dl.bukkit.org/latest-rb/craftbukkit.jar'
+CRAFTBUKKIT_BETA = 'http://dl.bukkit.org/latest-beta/craftbukkit-beta.jar'
+CRAFTBUKKIT_DEV = 'http://dl.bukkit.org/latest-dev/craftbukkit-dev.jar'
+CRAFTBUKKIT = CRAFTBUKKIT_DEV
+CRAFTBUKKIT_JAR = File.basename(CRAFTBUKKIT)
+
+LOCAL_SERVER_DIR = 'local-server'
+PLUGIN_DIR = File.join(LOCAL_SERVER_DIR, 'plugins')
+
+directory LOCAL_SERVER_DIR
+directory PLUGIN_DIR
+
+task :install do |t|
+  sh "cp hello-world.rb local-server/plugins/."
+end
+
+namespace :server do
+  task :setup => [LOCAL_SERVER_DIR, 'purugin:install', 'craftbukkit:update']
+
+  task :start => LOCAL_SERVER_DIR do |t|
+    sh "./start_bukkit.sh"
+  end
+
+  namespace :craftbukkit do
+    
+    task :remove do |t|
+      rm File.join(LOCAL_SERVER_DIR, CRAFTBUKKIT_JAR) if File.exists?(CRAFTBUKKIT_JAR)
+    end
+    
+    task :fetch do |t|
+      Dir.chdir(LOCAL_SERVER_DIR) do
+        sh "wget -nv #{CRAFTBUKKIT}"
+      end
+    end
+    
+    task :update => [:remove, :fetch]
+  end
+end
+
+namespace :purugin do
+  task :fetch do |t|
+    sh "git clone #{PURUGIN_REPO}"
+  end
+  
+  task :update do |t|
+    Dir.chdir(PURUGIN_DIR) do
+      sh "git pull && mvn clean"
+    end
+  end
+  
+  task :build do |t|
+    Rake::Task['purugin:fetch'].invoke unless Dir.exists?(PURUGIN_DIR)
+    
+    Dir.chdir(PURUGIN_DIR) do
+      sh "mvn package"
+    end
+  end
+  
+  task :install => [PLUGIN_DIR, :build] do |t|
+    purugin_jar = Dir.glob(File.join(PURUGIN_DIR, 'target','purugin*jar')).first
+    cp purugin_jar, File.join(PLUGIN_DIR, 'Purugin.jar')
+  end
+end
